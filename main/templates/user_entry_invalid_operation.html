@@ -1,0 +1,30 @@
+{% extends 'toppage-base.html' %}
+{% load static %}
+
+{% block title %}
+不正な画面遷移
+{% endblock %}
+
+{% block style %}
+  <style>
+    * {
+      text-align: center;
+    }
+    hr {
+      display: none;
+    }
+    
+
+    @media screen and (max-width: 480px){
+      h1, h2, h3 {
+        font-size: 20px;
+      }
+    }
+  </style>
+{% endblock %}
+{% block content %}
+   <p>
+        不正な画面遷移が行われました<br>
+       始めからやり直してください
+   </p>
+{% endblock %}

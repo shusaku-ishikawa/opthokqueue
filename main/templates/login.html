@@ -1,0 +1,53 @@
+{% extends 'toppage-base.html' %}
+{% load static %}
+{% block title %}
+  ログイン
+{% endblock %}
+{% block style %}
+  <style>
+  
+    .login-btn {
+        background-color: var(--red);
+        color:white;
+    }
+    .sign-up-btn {
+        background-color: var(--blue)!important;
+        
+    }
+    .small-text {
+        font-size: 0.8rem;
+    }
+
+    .pwd-forget {
+        margin-bottom: 1rem;
+        margin-top: 0.5rem
+    }
+    .no-account {
+        margin-bottom: 0.5rem
+    }
+    hr {
+        display: none;
+    }
+  </style>
+{% endblock %}
+{% block content %}
+    <form action="" method="post">
+      {{ form.non_field_errors }}
+      <div class="form-group">
+          {{ form.username }}
+      </div>
+      
+      {{ form.email.errors }}
+      <div class="form-group">
+          {{ form.password }}
+      </div>
+      
+      {{ form.password.error }}
+      {% csrf_token %}
+      <button type="submit" name="btn" value="Login" class="login-btn btn btn-block">ログイン</button>
+      <div class="pwd-forget small-text">
+          <a href="#">パスワードをお忘れの方</a>
+      </div>                                                     
+    </form>
+
+{% endblock %}

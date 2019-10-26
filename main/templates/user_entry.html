@@ -1,0 +1,170 @@
+{% extends 'toppage-base.html' %}
+{% load static %}
+
+{% block title %}
+情報入力
+{% endblock %}
+
+{% block style %}
+  <style>
+    input.my-date-input {
+      border-radius: 5px;
+      font-size: 12px;
+      display: inline-block;
+      width: 120px;
+    }
+
+    label.form-check-label {
+      font-size: 12px;
+    }
+    .form-check-label {
+      margin: 0 3px 0 0;
+    }
+
+    span.errormsg {
+      color: red;
+      font-size: 12px;
+
+    }
+    @media screen and (max-width: 480px){
+      h1, h2, h3 {
+        font-size: 20px;
+      }
+      span {
+        font-size: 12px;
+      }
+      span.badge.badge-danger {
+        font-size: 10px;
+      }
+      label {
+        font-size: 12px;
+      }
+      input.my-date-input {
+        font-size: 10px;
+        width: 120px;
+        background-color: white;
+      }
+    }
+  </style>
+{% endblock %}
+{% block header %}情報入力{% endblock %}
+{% block content %}
+    <form action="" method="post">
+      {{ form.non_field_errors }}
+      <input type="hidden" name="email" id= "id_email" value="{{ email }}">
+      
+      <input type="hidden" name="clinic" id= "id_clinic" value="{{ clinic }}">
+      
+      <div class="form-group">
+          <label for="id_nickname" class="control-label">名前(ニックネーム可)</label><span class="badge badge-danger">必須</span>
+          {{ form.nickname }}
+      </div>
+      {{ form.nickname.errors }}
+
+      <label for="no_specific_time">ご希望の時間帯</label>
+      {% for err in form.timeframes.errors %}
+        <span class="errormsg"><i class="fas fa-exclamation"></i>{{ err }}</span>
+      {% endfor %}
+      <div>
+        <div class="form-check form-check-inline">
+          {{ form.is_anytime }}
+          <label class="form-check-label" for="id_is_anytime">
+            指定なし
+          </label>
+        </div>
+        
+        <ul>
+          {% for dow_key, dow_value in day_of_week_dict.items %}
+            <li>
+                <span>{{ dow_value }}</span>
+                {% for tf_key, tf_value in time_frame_dict.items %}
+                  <div class="form-check form-check-inline">
+                    <input id="id_{{ dow_key }}_{{ tf_key }}" class="form-check-input"  type="checkbox" name="timeframes" value="{{ dow_key }}_{{ tf_key }}">
+                    <label class="form-check-label" for="id_{{ dow_key }}_{{ tf_key }}">
+                      {{ tf_value }}
+                    </label>
+                  </div>
+                {% endfor %}
+            </li>
+            {% endfor %}
+        </ul>
+
+      </div>
+
+      <label>ご希望の期間</label>
+      {% for err in form.to_date.errors %}
+        <span class="errormsg"><i class="fas fa-exclamation"></i>{{ err }}</span>
+      {% endfor %}
+      {% for err in form.from_date.errors %}
+        <span class="errormsg"><i class="fas fa-exclamation"></i>{{ err }}</span>
+      {% endfor %}
+      <div class="row">
+        <div class="col-md-3">
+          <div class="form-check form-check-inline">
+            <input style="margin-bottom:3px;" id="id_is_anyday" class="form-check-input"  type="radio" name="is_anyday" value="True">
+            <label class="form-check-label" for="id_is_anyday">
+              指定なし
+            </label>
+          </div>
+        </div>
+        <div class="col-md-9">
+            <input type="radio" name="is_anyday" value="False">
+            {{ form.from_date }}
+            <span>〜</span>
+            {{ form.to_date }}           
+        </div>
+      </div>
+  
+      <label>治療内容(複数選択可)</label>
+
+      <div class="row">
+        <div class="col-12">
+            <div class="form-check form-check-inline">
+             {{ form.do_chiryo }}<label class="form-check-label" for="id_do_chiryo">治療</label>
+             {{ form.do_teikikenshin }}<label  class="form-check-label" for="id_do_teikikenshin">定位検診</label>
+             {{ form.do_whitening }}<label  class="form-check-label" for="id_do_whitening">ホワイトニング</label>
+             {{ form.do_kyousei }}<label class="form-check-label"  for="id_do_kyousei">矯正</label>
+            </div>
+        </div>
+      </div>
+     
+      {{ form.operations.error }}
+
+
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">登録</button>                                                   
+    </form>
+
+{% endblock %}
+{% block script %}
+<script>
+  var $input_is_anytime = $('#id_is_anytime');
+  var $input_is_anyday = $('input[name="is_anyday"]');
+  var $input_to_date = $('#id_to_date');
+  var $input_from_date = $('#id_from_date');
+  
+  var $input_timeframes = $('input[name="timeframes"]');
+  $(function() {
+    $input_is_anytime.change(function () {
+      var checked = ($(this).prop('checked'))
+      $input_timeframes.attr('disabled', checked)
+    });
+    
+    $input_is_anyday.change(function () {
+      var is_anyday = $(this).val() == 'True';
+      $('#id_to_date').attr('disabled', is_anyday);
+      $('#id_from_date').attr('disabled', is_anyday);
+    });
+    
+
+    $('form').submit(function(e) {
+      var is_anyday = $('#id_is_anyday').prop('checked');
+      if (!is_anyday && $input_from_date.val() == '' && $input_to_date.val() == '' ) {
+        alert('日付を入力してください');
+        return false;
+      }
+      return true; 
+    });
+  })
+</script>
+{% endblock %}

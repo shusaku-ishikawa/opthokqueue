@@ -1,0 +1,32 @@
+{% extends 'toppage-base.html' %}
+{% load static %}
+
+{% block title %}
+登録完了
+{% endblock %}
+
+{% block style %}
+  <style>
+    * {
+      text-align: center;
+    }
+    hr {
+      display: none;
+    }
+    
+
+    @media screen and (max-width: 480px){
+      h1, h2, h3 {
+        font-size: 20px;
+      }
+    } 
+  </style>
+{% endblock %}
+{% block content %}
+   <h2>ご希望を受付ました</h2>
+   <p>
+       ご希望の日時に空きが出ましたら<br>
+       メールにてご連絡いたします。
+   </p>
+   <button class="btn btn-danger">終了する</button>
+{% endblock %}

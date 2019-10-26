@@ -1,0 +1,163 @@
+{% extends 'toppage-base.html' %}
+{% load static %}
+
+{% block title %}
+管理画面
+{% endblock %}
+
+{% block style %}
+  <style>
+    
+    button.create-btn, button.delete-btn {
+        margin: 5px 0;
+    }
+    input.my-date-input {
+      border-radius: 5px;
+      color: gray;
+      font-size: 12px;
+      display: inline-block;
+    }
+    select.form-control {
+        height: 100%!important;
+    }
+    input.my-checkbox {
+        vertical-align: middle;
+        transform: scale(1.2);
+    }
+    input.form-control:read-only {
+        font-size: 14px;
+        padding: 5px;
+    }
+
+    ul {
+      padding-inline-start: 20px;
+    }
+    .for-margin {
+        height: 20px;
+    }
+    h1, h2, h3 {
+    }
+    div.row.invite-row {
+        vertical-align: middle;
+        margin: 5px 0;
+        padding: 2px;
+        border-radius: 5px;
+        border: solid lightgray 1px;
+        box-shadow: 1px 1px 1px rgba(0,0,0,0.4);
+    }
+    div.matched-count {
+        border-radius: 50%;
+        font-size: 12px;
+        background-color: blue;
+        color: white;
+        height: 100%;
+        width: 100%;
+        line-height: 30px;
+    }
+    .tight {
+        padding: 3px;
+    }
+    .alert-success {
+        padding:0!important;
+        vertical-align: middle!important;
+    }
+    .alert-success .row {
+        font-size: 14px;
+        padding: none;
+        margin: 10px;
+    }
+
+    @media screen and (max-width: 480px){
+      h1, h2, h3 {
+        font-size: 20px;
+      }
+      span {
+        font-size: 12px;
+      }
+      span.badge.badge-danger {
+        font-size: 10px;
+      }
+      label {
+        font-size: 12px;
+      }
+      input.my-date-input {
+        font-size: 10px;
+        width: 120px;
+        background-color: white;
+      }
+      input.form-control:read-only {
+        font-size: 12px;
+        padding: 3px;
+    }
+    }
+  </style>
+{% endblock %}
+{% block header %}管理画面{% endblock %}
+{% block content %}
+  
+    <form method="post">
+        {% for message in messages %}
+            {% if message.tags == 'success' %} 
+            <div class="row">
+                <div class="col-12">
+                    <div class="alert alert-success" role="alert">
+                    <div class="row">
+                        <div class="col-1">
+                        <i class="fa fa-check"></i> 
+                        </div>
+                        <div class="col-10">
+                            {{ message }}
+                        </div>
+                    </div>
+                    </div>      
+                </div>
+            </div> 
+            {% endif %}
+        {% endfor %}
+        <input type="hidden" name="action" value="start">
+        
+        <div class="row">
+            <div class="col-12">
+                <div class="row invite-row">
+                    {{ create_form.date.error }}
+                    {{ create_form.time_frame.error }}     
+                    <div class="col-6 tight">
+                        {{ create_form.date }}
+                    </div>
+                    <div class="col-6 tight">
+                        {{ create_form.time_frame }}
+                    </div>
+                    
+                    <div class="col-12 tight">
+                        <button class="btn btn-block btn-danger create-btn">募集を開始する</button> 
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% csrf_token %}
+    </form>
+
+    <h4 class="text-center title">募集中一覧</h4> 
+    <form method="post">
+        <input type="hidden" name="action" value="end">
+        {% for invite in object_list %}
+            <div class="row invite-row">
+                <div class="col-1 text-center tight">
+                    <input type="checkbox" name="invite_{{ invite.id }}" class="my-checkbox">
+                </div>
+                <div class="col-5 text-center tight">
+                    <input readonly type="text" value="{{ invite.date|date:"Y/m/d" }}" class="form-control">
+                </div>
+                <div class="col-5 text-center tight">
+                    <input style="height: 100%;" readonly type="text" value="{{ invite.timeframe_readable }}" class="form-control">
+                </div>
+                <div class="col-1 text-center tight">
+                   <div class="matched-count"><span>{{ invite.matched_count }}</span></div>
+                </div>
+            </div>
+        {% endfor %}
+        <button class="btn btn-block btn-primary delete-btn">募集を終了する</button> 
+        {% csrf_token %}            
+    </form>
+      
+{% endblock %}
