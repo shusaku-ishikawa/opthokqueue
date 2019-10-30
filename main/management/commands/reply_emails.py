@@ -33,7 +33,8 @@ class Command(BaseCommand):
     help = 'メールチェック'
     def handle(self, *args, **options):
         #baseurl = 'http://stoneriver.info'
-        baseurl = 'http://localhost:8000/queue/userentry'
+        # baseurl = 'http://localhost:8/queue/userentry'
+        baseurl = 'http://opthok-navi.com/queue/userentry'
         hostname = "opthok-navi.com"
         user = 'noreply'
         passwd = 'P@ssw0rd'
