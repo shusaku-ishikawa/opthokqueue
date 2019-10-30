@@ -1,17 +1,24 @@
 {% extends 'base.html' %}
 {% load static %}
-
 {% block style %}
     <style>
-        .logo-wrapper {
-            text-align: center;
-            margin-top: 2rem
+        .my-header {
+            padding: 1rem;
+           
         }
-        .header-logo {
-            width: 60%;
-            margin-bottom: 2rem
+        .my-header .header-logo {
+            width: 100%;
+            height: auto;
+            padding-bottom: 5px;
         }
-
+        .my-header .user-col {
+            text-align: right;
+        }
+        .my-header .logout-btn {
+            height: 20px;
+            font-size: 8px;
+            padding:2px;
+        }
         .my-card-body {
             padding: 2rem 2.6rem
         }
@@ -35,9 +42,16 @@
     <div class="container">
         <div class="row">
             <div class="col-md-6 offset-md-3 col-12">
-                <div class="logo-wrapper">
-                    <img class="header-logo" src="{% static 'img/logo-trans.png' %}">
+                <div class="row my-header">
+                    <div class="col-6 logo-col">
+                        <img class="header-logo" src="{% static 'img/logo-trans.png' %}">
+                    </div>
+                    <div class="col-6 user-col">
+                        <span class="clinic-name">{{ user.name }}</span>
+                        <a class="btn btn-danger logout-btn" href="{% url 'main:logout' %}">ログアウト</a>
+                    </div>
                 </div>
+               
                 <div class="card">
                     <div class="card-body my-card-body">
                         <h3 class="text-center title">{% block header %}{% endblock %}</h3><hr>

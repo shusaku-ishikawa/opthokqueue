@@ -3,7 +3,7 @@
 {% block title %}
   ログイン
 {% endblock %}
-{% block style %}
+{% block pagestyle %}
   <style>
   
     .login-btn {
@@ -44,10 +44,7 @@
       
       {{ form.password.error }}
       {% csrf_token %}
-      <button type="submit" name="btn" value="Login" class="login-btn btn btn-block">ログイン</button>
-      <div class="pwd-forget small-text">
-          <a href="#">パスワードをお忘れの方</a>
-      </div>                                                     
+      <button type="submit" name="btn" value="Login" class="login-btn btn btn-block">ログイン</button>                                              
     </form>
 
 {% endblock %}

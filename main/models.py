@@ -53,10 +53,13 @@ class Clinic(AbstractBaseUser, PermissionsMixin):
         verbose_name = '医院'
         verbose_name_plural = '医院'
 
+    def __str__(self):
+        return self.name
     """カスタムユーザーモデル."""
     email = models.EmailField('メールアドレス', max_length=150, null = False, blank=False, unique = True)
     name = models.CharField('医院名', max_length=150, null = False, blank=False)
-    
+    phone = models.CharField('電話番号', max_length = 100, null = False, blank = False)
+    qrcode = models.ImageField('QR', upload_to = 'qrcode', null = True)
     is_staff = models.BooleanField(
         '管理者',
         default=False,
@@ -90,15 +93,46 @@ class Clinic(AbstractBaseUser, PermissionsMixin):
         他アプリケーションが、username属性にアクセスした場合に備えて定義
         メールアドレスを返す
         """
-        return self.email
+        return self.name
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+import qrcode
+from io import StringIO, BytesIO
+from django.core.files.uploadedfile import InMemoryUploadedFile
+
+
+@receiver(post_save, sender=Clinic)
+def create_qrcode(sender, instance, created, **kwargs):
+    if created:
+        print('new clinic created')
+        content = 'mailto:{contact}?subject=clinicId={clinic_id}&body=そのまま送信してください。'.format(contact = settings.DEFAULT_FROM_EMAIL, clinic_id = instance.id)
+        img = qrcode.make(content)
+        img_io = BytesIO()
+        img.save(img_io, format='JPEG')
+        qrfile = InMemoryUploadedFile(img_io, None, 'qrcode_{}.jpg'.format(instance.id), 'image/jpeg', len(img_io.getvalue()), None)
+        instance.qrcode = qrfile
+        instance.save()
+
 
 class ClinicInvite(models.Model):
+    class Meta:
+        verbose_name = '空き枠'
+        verbose_name_plural = '空き枠'
+
+    def __str__(self):
+        return self.clinic.name + self.date.strftime('%Y/%m/%d') + self.timeframe_readable
+
     clinic = models.ForeignKey(
+        verbose_name = '医院',
         to = Clinic,
         on_delete = models.CASCADE
     )
-    date = models.DateField()
+    date = models.DateField(
+        verbose_name = '日'
+    )
     time_frame = models.CharField(
+        verbose_name = '時間帯',
         max_length = 10,
         choices = [(key, value) for (key, value) in TIME_FRAME_DICT.items() if key != TIME_FRAME_ANYTIME]
     )
@@ -139,11 +173,28 @@ class ClinicInvite(models.Model):
                     print(type(self.day_of_week))
                     print('day of week invaid{} {}'.format(tf.day_of_week, self.day_of_week))
         return False
+    def notify_start(self):
+        context = { 'object': self }
+        subject = 'キャンセル待ちシステム[募集開始]'
+        message = get_template('mail/start_invite.txt').render(context)
+        self.clinic.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
+
+    def notify_new_candidate(self, new_entry):
+        context = { 'object': self, 'new_entry': new_entry }
+        subject = 'キャンセル待ちシステム[新規に応募がありました]'
+        message = get_template('mail/new_candidate.txt').render(context)
+        self.clinic.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
+       
+
 class UserEntry(models.Model):
+    class Meta:
+        verbose_name = 'キャンまち'
+        verbose_name_plural = 'キャンまち'
     def __str__(self):
         return self.nickname
 
     matched_invite = models.ForeignKey(
+        verbose_name = 'マッチした空き枠',
         to = ClinicInvite,
         null = True,
         blank = True,
@@ -152,52 +203,76 @@ class UserEntry(models.Model):
     )
 
     clinic = models.ForeignKey(
+        verbose_name = '医院',
         to = Clinic,
         on_delete = models.CASCADE
     )
-    email = models.EmailField()
+    email = models.EmailField(
+        verbose_name = 'メールアドレス'
+    )
 
     nickname = models.CharField(
+        verbose_name = 'ニックネーム',
         max_length = 100
     )
     from_date = models.DateField(
+        verbose_name = 'いつから',
         blank = True,
         null = True
     )
     to_date = models.DateField(
+        verbose_name = 'いつまで',
         blank = True,
         null = True
     )
-    is_anytime = models.BooleanField()
-    is_anyday = models.BooleanField()
+    is_anytime = models.BooleanField(
+        verbose_name = '時間帯不問'
+    )
+    is_anyday = models.BooleanField(
+        verbose_name = '日にち不問'
+    )
 
     do_chiryo = models.BooleanField(
-        verbose_name = '治療'
+        verbose_name = '治療希望'
     )
-    do_teikikenshin = models.BooleanField()
-    do_whitening = models.BooleanField()
-    do_kyousei = models.BooleanField()
+    do_teikikenshin = models.BooleanField(
+        verbose_name = '定期健診希望'
+    )
+    do_whitening = models.BooleanField(
+        verbose_name = 'ホワイトニング希望'
+    )
+    do_kyousei = models.BooleanField(
+        verbose_name = '希望希望'
+    )
 
     def email_user(self, subject, message, from_email=None, **kwargs):
         """Send an email to this user."""
         send_mail(subject, message, from_email, [self.email], **kwargs)
     
     def notify_match(self, invite):
-        context = { "date": invite.date, "timeframe": TIME_FRAME_DICT[invite.time_frame] }
-        subject = '空きが出ました'
+        context = { "nickname": self.nickname, "date": invite.date, "timeframe": TIME_FRAME_DICT[invite.time_frame], 'clinic_phone': self.clinic.phone }
+        subject = '予約空き情報[{}]'.format(self.clinic.name)
         message = get_template('mail/match.txt').render(context)
         self.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
         self.matched_invite = invite    
         self.save()
 class UserEntryTimeFrame(models.Model):
-
+    class Meta:
+        verbose_name = 'キャンまち明細'
+        verbose_name_plural = 'キャンまち明細'
     user_entry = models.ForeignKey(
         to = UserEntry,
         on_delete = models.CASCADE,
         related_name = 'timeframes'
     )
-    day_of_week = models.CharField(max_length = 10)
-    time_frame = models.CharField(max_length = 10)
+    day_of_week = models.CharField(
+        verbose_name = '希望曜日',
+        max_length = 10
+    )
+    time_frame = models.CharField(
+        verbose_name = '希望時間帯',
+        max_length = 10
+    )
     @property
     def day_of_week_readable(self):
         return DAY_OF_WEEK_DICT[self.day_of_week]

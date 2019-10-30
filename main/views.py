@@ -24,6 +24,11 @@ class Login(LoginView): # 追加
     form_class = LoginForm
     template_name = 'login.html'
 
+class Logout(LoginRequiredMixin, LogoutView):
+    """ログアウトページ"""
+    template_name = 'login.html'
+
+
 class UserEntryView(generic.FormView):
     form_class = UserEntryForm
     template_name = 'user_entry.html'

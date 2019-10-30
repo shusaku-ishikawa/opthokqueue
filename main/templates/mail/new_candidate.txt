@@ -1,0 +1,9 @@
+{{ object.date }} {{ object.timeframe_readable }}の募集に応募がありました。
+
+{{ new_entry.nickname }}
+
+[現在の状況]
+該当{{ object.matched_count }}名
+{% for entry in object.matched.all %}
+{{ entry.nickname }}
+{% endfor %}

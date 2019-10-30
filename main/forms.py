@@ -75,6 +75,7 @@ class UserEntryForm(forms.ModelForm):
         for invite in ClinicInvite.objects.all():
             if invite.match(instance):
                 instance.notify_match(invite)
+                invite.notify_new_candidate(instance)
         return instance
 
 class ClinicInviteForm(forms.ModelForm):
@@ -93,6 +94,7 @@ class ClinicInviteForm(forms.ModelForm):
         for user_entry in UserEntry.objects.all():
             if instance.match(user_entry):
                 user_entry.notify_match(instance)
+        instance.notify_start()
         return instance
 
         

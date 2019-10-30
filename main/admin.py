@@ -23,7 +23,7 @@ class MyUserCreationForm(UserCreationForm):
 
 class MyUserAdmin(UserAdmin):
     fieldsets = (
-        (None, {'fields': ('email','name', 'password')}),
+        (None, {'fields': ('email','name', 'phone', 'qrcode' , 'password')}),
         (_('Personal info'), {'fields': ()}),
         (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser')}),
         (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
@@ -31,12 +31,12 @@ class MyUserAdmin(UserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email','name', 'password1', 'password2'),
+            'fields': ('email','name', 'phone', 'qrcode', 'password1', 'password2'),
         }),
     )
     form = MyUserChangeForm
     add_form = MyUserCreationForm
-    list_display = ('email', 'name', 'is_staff', 'is_active', 'is_superuser')
+    list_display = ('email', 'name', 'phone', 'qrcode', 'is_staff', 'is_active', 'is_superuser')
 
     ordering = ('name',)
 

@@ -1,0 +1,5 @@
+{{ object.date }} {{ object.timeframe_readable }}に募集を行いました。
+該当{{ object.matched_count }}名
+{% for entry in object.matched.all %}
+{{ entry.nickname }}
+{% endfor %}
