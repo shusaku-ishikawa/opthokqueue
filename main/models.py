@@ -106,7 +106,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 def create_qrcode(sender, instance, created, **kwargs):
     if created:
         print('new clinic created')
-        content = 'mailto:{contact}?subject=clinicId={clinic_id}&body=そのまま送信してください。'.format(contact = settings.DEFAULT_FROM_EMAIL, clinic_id = instance.id)
+        content = 'mailto:{contact}?subject=clinicId_{clinic_id}'.format(contact = settings.DEFAULT_FROM_EMAIL_FOR_QR, clinic_id = instance.id)
         img = qrcode.make(content)
         img_io = BytesIO()
         img.save(img_io, format='JPEG')

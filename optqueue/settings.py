@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_crontab',
     'main'
 ]
 
@@ -81,8 +82,15 @@ WSGI_APPLICATION = 'optqueue.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'queue',
+        'USER': 'root',
+        'PASSWORD': '332191-Aa',
+        'HOST': '127.0.0.1',
+        'PORT': '',
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
     }
 }
 
@@ -130,6 +138,8 @@ MEDIA_URL = '/media_queue/' # 追加
 
 #EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'おぷきた連絡ナビ <noreply@opthok-navi.com>'
+DEFAULT_FROM_EMAIL_FOR_QR = 'noreply@opthok-navi.com'
+
 #DEFAULT_FROM_EMAIL = 'noreply@opthok-navi.com'
 
 DEFAULT_CHARSET = 'utf-8'
@@ -138,6 +148,13 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'noreply@opthok-navi.com'
 EMAIL_HOST_PASSWORD = 'P@ssw0rd'
 EMAIL_USE_SSL = False
+
+# JOBs
+CRONJOBS = [
+    ('* * * * *', 'django.core.management.call_command', ['reply_emails']),
+]
+CRONTAB_LOCK_JOBS = False
+
 
 # DEFAULT_FROM_EMAIL = 'contact@stoneriver.info'
 
