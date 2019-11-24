@@ -42,7 +42,16 @@ class UserEntryView(generic.FormView):
         context['operation_dict'] = OPERATION_DICT
         context['email'] = self.request.GET.get('email')
         context['clinic'] = self.request.GET.get('clinic')
-
+        
+        email = self.request.GET.get('email')
+        clinic = self.request.GET.get('clinic')
+        try:
+            instance = UserEntry.objects.get(email = email, clinic = clinic)
+        except UserEntry.DoesNotExist:
+            pass
+        else:
+            print(instance)
+            context['instance'] = instance
         return context
 
     def form_valid(self, form):
@@ -57,6 +66,7 @@ class UserEntryView(generic.FormView):
     def get(self, request, **kwargs):
         if 'clinic' not in request.GET or 'email' not in request.GET:
             return render(request, self.invalid_operation_template)
+        
         return super().get(request, **kwargs)
 
 class UserEntryCompletedView(generic.TemplateView):

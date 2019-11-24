@@ -47,7 +47,7 @@ class UserEntryTimeFrameAdmin(admin.ModelAdmin):
     list_display = ('user_entry', 'day_of_week_readable', 'timeframe_readable')
 
 class ClinicInviteAdmin(admin.ModelAdmin):
-    list_display = ('clinic', 'date', 'timeframe_readable')
+    list_display = ('clinic', 'date', 'start_time')
 
 admin.site.register(Clinic, MyUserAdmin)
 admin.site.register(UserEntry, UserEntryAdmin)

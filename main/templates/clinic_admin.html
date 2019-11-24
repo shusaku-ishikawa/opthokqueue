@@ -40,8 +40,8 @@
         margin: 3px 0;
         padding: 1px;
         border-radius: 5px;
-        border: solid lightgray 1px;
-        box-shadow: 1px 1px 1px rgba(0,0,0,0.4);
+        /* border: solid lightgray 1px;
+        box-shadow: 1px 1px 1px rgba(0,0,0,0.4); */
     }
     .invite-row input.form-control {
         height: 100%;
@@ -147,12 +147,12 @@
             <div class="col-12">
                 <div class="row invite-row">
                     {{ create_form.date.error }}
-                    {{ create_form.time_frame.error }}     
+                    {{ create_form.start_time.error }}     
                     <div class="col-6 tight">
                         {{ create_form.date }}
                     </div>
                     <div class="col-6 tight">
-                        {{ create_form.time_frame }}
+                        {{ create_form.start_time }}
                     </div>
                     
                     <div class="col-12 tight">
@@ -209,6 +209,7 @@
 {% block script %}
     <script>
         var $expand_btn = $('.expand-btn');
+        var $start_time_input = $('#id_start_time');
         $(function() {
             $expand_btn.on('click', function() {
                 var $target = $(this).closest('.invite-row').find('.matched-entry-div');
@@ -221,6 +222,10 @@
                     $(this).text('+');
                 }
             })
+            $start_time_input.timeDropper({
+              format: "H:mm",
+              setCurrentTime: false,
+            });
         })
     </script>
 {% endblock %}

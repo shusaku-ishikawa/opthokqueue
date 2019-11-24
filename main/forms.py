@@ -28,7 +28,7 @@ class UserEntryForm(forms.ModelForm):
 
     class Meta:
         model = UserEntry
-        fields = ('clinic','is_anytime', 'email', 'nickname', 'from_date', 'to_date', 'is_anyday', 'do_chiryo', 'do_teikikenshin', 'do_whitening', 'do_kyousei')
+        fields = ('clinic','is_anytime', 'email', 'nickname', 'from_date', 'to_date', 'is_anyday')
         widgets = {
             'from_date': forms.DateInput(format=('%Y/%m/%d'), attrs={'type':'date'}),
             'to_date': forms.DateInput(format=('%Y/%m/%d'), attrs={'type':'date'}),
@@ -39,11 +39,6 @@ class UserEntryForm(forms.ModelForm):
         self.fields['to_date'].widget.attrs['class'] = 'my-date-input'
         self.fields['is_anytime'].widget.attrs['class'] = 'form-check-input'
         self.fields['is_anyday'].widget.attrs['class'] = 'form-check-input'
-        
-        self.fields['do_chiryo'].widget.attrs['class'] = 'form-check-input'
-        self.fields['do_teikikenshin'].widget.attrs['class'] = 'form-check-input'
-        self.fields['do_whitening'].widget.attrs['class'] = 'form-check-input'
-        self.fields['do_kyousei'].widget.attrs['class'] = 'form-check-input'
         
         self.fields['email'].widget.attrs['placeholder'] = "パソコン、携帯どちらも可"    
         self.fields['email'].widget.attrs['class'] = "form-control"    
@@ -59,6 +54,11 @@ class UserEntryForm(forms.ModelForm):
 
     def save(self, commit=True):
         timeframes = self.cleaned_data.pop('timeframes')
+        email = self.cleaned_data['email']
+        clinic = self.cleaned_data['clinic']
+        try:
+            instance = UserEntry.objects.get(email = email, clinic = clinic)
+        except 
         instance = UserEntry(**self.cleaned_data)
         if commit:
             instance.save()
@@ -81,14 +81,14 @@ class UserEntryForm(forms.ModelForm):
 class ClinicInviteForm(forms.ModelForm):
     class Meta:
         model = ClinicInvite
-        fields = ('clinic', 'date', 'time_frame')
+        fields = ('clinic', 'date', 'start_time')
         widgets = {
             'date': forms.DateInput(format=('%Y/%m/%d'), attrs={'type':'date'}),
         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['date'].widget.attrs['class'] = 'form-control'
-        self.fields['time_frame'].widget.attrs['class'] = 'form-control'
+        self.fields['start_time'].widget.attrs['class'] = 'form-control'
     def save(self, commit = True):
         instance = super().save(commit)
         for user_entry in UserEntry.objects.all():

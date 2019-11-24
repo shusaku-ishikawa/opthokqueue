@@ -121,7 +121,7 @@ class ClinicInvite(models.Model):
         verbose_name_plural = '空き枠'
 
     def __str__(self):
-        return self.clinic.name + self.date.strftime('%Y/%m/%d') + self.timeframe_readable
+        return self.clinic.name # + self.date.strftime('%Y/%m/%d') + self.timeframe_readable
 
     clinic = models.ForeignKey(
         verbose_name = '医院',
@@ -131,14 +131,18 @@ class ClinicInvite(models.Model):
     date = models.DateField(
         verbose_name = '日'
     )
-    time_frame = models.CharField(
-        verbose_name = '時間帯',
-        max_length = 10,
-        choices = [(key, value) for (key, value) in TIME_FRAME_DICT.items() if key != TIME_FRAME_ANYTIME]
+    start_time = models.TimeField(
+        verbose_name = '開始時間',
+        default=timezone.now,
     )
-    @property
-    def timeframe_readable(self):
-        return TIME_FRAME_DICT[self.time_frame]
+    # time_frame = models.CharField(
+    #     verbose_name = '時間帯',
+    #     max_length = 10,
+    #     choices = [(key, value) for (key, value) in TIME_FRAME_DICT.items() if key != TIME_FRAME_ANYTIME]
+    # )
+    # @property
+    # def timeframe_readable(self):
+    #     return TIME_FRAME_DICT[self.time_frame]
     @property
     def matched_count(self):
         return len(self.matched.all())
@@ -159,19 +163,20 @@ class ClinicInvite(models.Model):
         if user_entry.is_anytime:
             return True
         else:
-            for tf in user_entry.timeframes.all():
-                if tf.day_of_week == self.day_of_week:
-                    if tf.time_frame == TIME_FRAME_ANYTIME:
-                        return True
-                    else:
-                        if tf.time_frame == self.time_frame:
-                            return True
-                        else:
-                            print('timeframe invalid')
-                else:
-                    print(type(tf.day_of_week))
-                    print(type(self.day_of_week))
-                    print('day of week invaid{} {}'.format(tf.day_of_week, self.day_of_week))
+            pass
+            # for tf in user_entry.timeframes.all():
+            #     if tf.day_of_week == self.day_of_week:
+            #         if tf.time_frame == TIME_FRAME_ANYTIME:
+            #             return True
+            #         else:
+            #             if tf.time_frame == self.time_frame:
+            #                 return True
+            #             else:
+            #                 print('timeframe invalid')
+            #     else:
+            #         print(type(tf.day_of_week))
+            #         print(type(self.day_of_week))
+            #         print('day of week invaid{} {}'.format(tf.day_of_week, self.day_of_week))
         return False
     def notify_start(self):
         context = { 'object': self }
@@ -184,7 +189,9 @@ class ClinicInvite(models.Model):
         subject = 'キャンセル待ちシステム[新規に応募がありました]'
         message = get_template('mail/new_candidate.txt').render(context)
         self.clinic.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
-       
+    @property
+    def timeframe_list(self):
+        return ['{}_{}'.format(tf.day_of_week, tf.time_frame) for tf in self.timeframes]
 
 class UserEntry(models.Model):
     class Meta:
@@ -232,25 +239,13 @@ class UserEntry(models.Model):
         verbose_name = '日にち不問'
     )
 
-    do_chiryo = models.BooleanField(
-        verbose_name = '治療希望'
-    )
-    do_teikikenshin = models.BooleanField(
-        verbose_name = '定期健診希望'
-    )
-    do_whitening = models.BooleanField(
-        verbose_name = 'ホワイトニング希望'
-    )
-    do_kyousei = models.BooleanField(
-        verbose_name = '希望希望'
-    )
 
     def email_user(self, subject, message, from_email=None, **kwargs):
         """Send an email to this user."""
         send_mail(subject, message, from_email, [self.email], **kwargs)
     
     def notify_match(self, invite):
-        context = { "nickname": self.nickname, "date": invite.date, "timeframe": TIME_FRAME_DICT[invite.time_frame], 'clinic_phone': self.clinic.phone }
+        context = { "clinic": invite.clinic.name, "nickname": self.nickname, "date": invite.date, "timeframe": TIME_FRAME_DICT[invite.time_frame], 'clinic_phone': self.clinic.phone }
         subject = '予約空き情報[{}]'.format(self.clinic.name)
         message = get_template('mail/match.txt').render(context)
         self.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)

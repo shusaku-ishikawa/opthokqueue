@@ -1,6 +1,6 @@
 {% extends 'toppage-base.html' %}
 {% load static %}
-
+{% load myfilters %}
 {% block title %}
 情報入力
 {% endblock %}
@@ -57,7 +57,7 @@
       
       <div class="form-group">
           <label for="id_nickname" class="control-label">名前(ニックネーム可)</label><span class="badge badge-danger">必須</span>
-          {{ form.nickname }}
+          <input type="text" name = 'nickname' id = 'id_nickname' class="form-control" value="{{ instance.nickname }}">
       </div>
       {{ form.nickname.errors }}
 
@@ -67,7 +67,7 @@
       {% endfor %}
       <div>
         <div class="form-check form-check-inline">
-          {{ form.is_anytime }}
+          <input id="id_is_anytime" name = 'is_anytime' type="checkbox" class="form-check-input" {% if instance.is_anytime %}checked{% endif %}>
           <label class="form-check-label" for="id_is_anytime">
             指定なし
           </label>
@@ -78,12 +78,14 @@
             <li>
                 <span>{{ dow_value }}</span>
                 {% for tf_key, tf_value in time_frame_dict.items %}
+                {% with dow_key|concat:tf_key as combine_key %}
                   <div class="form-check form-check-inline">
-                    <input id="id_{{ dow_key }}_{{ tf_key }}" class="form-check-input"  type="checkbox" name="timeframes" value="{{ dow_key }}_{{ tf_key }}">
-                    <label class="form-check-label" for="id_{{ dow_key }}_{{ tf_key }}">
+                    <input id="id_{{ combine_key }}" class="form-check-input"  type="checkbox" name="timeframes" value="{{ combine_key }}" {% if combine_key|timeframeexists:instance.timeframe_list  %}checked{% endif %}>
+                    <label class="form-check-label" for="id_{{ combine_key }}">
                       {{ tf_value }}
                     </label>
                   </div>
+                {% endwith %}
                 {% endfor %}
             </li>
             {% endfor %}
@@ -101,7 +103,7 @@
       <div class="row">
         <div class="col-md-3">
           <div class="form-check form-check-inline">
-            <input style="margin-bottom:3px;" id="id_is_anyday" class="form-check-input"  type="radio" name="is_anyday" value="True">
+            <input style="margin-bottom:3px;" id="id_is_anyday" class="form-check-input"  type="radio" {% if instance.is_anyday %}checked{% endif %} name="is_anyday" value="True">
             <label class="form-check-label" for="id_is_anyday">
               指定なし
             </label>
@@ -109,28 +111,12 @@
         </div>
         <div class="col-md-9">
             <input type="radio" name="is_anyday" value="False">
-            {{ form.from_date }}
+            <input class="my-date-input" type="date" id = "id_from_date" name = 'from_date' value="{% if instance %}instance.from_date{% endif %}">
             <span>〜</span>
-            {{ form.to_date }}           
+            <input class="my-date-input" type="date" id = "id_to_date" name = 'to_date' value="{% if instance %}instance.to_date{% endif %}">
         </div>
       </div>
-  
-      <label>治療内容(複数選択可)</label>
-
-      <div class="row">
-        <div class="col-12">
-            <div class="form-check form-check-inline">
-             {{ form.do_chiryo }}<label class="form-check-label" for="id_do_chiryo">治療</label>
-             {{ form.do_teikikenshin }}<label  class="form-check-label" for="id_do_teikikenshin">定位検診</label>
-             {{ form.do_whitening }}<label  class="form-check-label" for="id_do_whitening">ホワイトニング</label>
-             {{ form.do_kyousei }}<label class="form-check-label"  for="id_do_kyousei">矯正</label>
-            </div>
-        </div>
-      </div>
-     
-      {{ form.operations.error }}
-
-
+    
       {% csrf_token %}
       <button type="submit" class="btn btn-danger">登録</button>                                                   
     </form>
@@ -145,11 +131,18 @@
   
   var $input_timeframes = $('input[name="timeframes"]');
   $(function() {
+    if ($input_is_anytime.prop('checked')) {
+      $input_timeframes.attr('disabled', true)
+    }
     $input_is_anytime.change(function () {
       var checked = ($(this).prop('checked'))
       $input_timeframes.attr('disabled', checked)
     });
     
+    if ($input_is_anyday.prop('checked')) {
+      $('#id_to_date').attr('disabled', true);
+      $('#id_from_date').attr('disabled', true);
+    }
     $input_is_anyday.change(function () {
       var is_anyday = $(this).val() == 'True';
       $('#id_to_date').attr('disabled', is_anyday);
