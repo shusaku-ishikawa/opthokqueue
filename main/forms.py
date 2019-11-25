@@ -58,9 +58,19 @@ class UserEntryForm(forms.ModelForm):
         clinic = self.cleaned_data['clinic']
         try:
             instance = UserEntry.objects.get(email = email, clinic = clinic)
-        except 
-        instance = UserEntry(**self.cleaned_data)
-        if commit:
+        except UserEntry.DoesNotExist:
+            instance = UserEntry(**self.cleaned_data)
+            if commit:
+                instance.save()
+        else:
+            old_timeframes = UserEntryTimeFrame.objects.filter(user_entry = instance)
+            old_timeframes.delete()
+            instance.matched_invite = None
+            instance.is_anytime = self.cleaned_data['is_anytime']
+            instance.nickname = self.cleaned_data['nickname']
+            instance.from_date = self.cleaned_data['from_date']
+            instance.to_date = self.cleaned_data['to_date']
+            instance.is_anyday = self.cleaned_data['is_anyday']
             instance.save()
 
         if timeframes:

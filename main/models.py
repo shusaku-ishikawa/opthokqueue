@@ -135,6 +135,7 @@ class ClinicInvite(models.Model):
         verbose_name = '開始時間',
         default=timezone.now,
     )
+
     # time_frame = models.CharField(
     #     verbose_name = '時間帯',
     #     max_length = 10,
@@ -189,9 +190,28 @@ class ClinicInvite(models.Model):
         subject = 'キャンセル待ちシステム[新規に応募がありました]'
         message = get_template('mail/new_candidate.txt').render(context)
         self.clinic.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
+    
+    
     @property
     def timeframe_list(self):
         return ['{}_{}'.format(tf.day_of_week, tf.time_frame) for tf in self.timeframes]
+
+class ClinicAddtionalField(models.Model):
+    clinic = models.ForeignKey(
+        to = Clinic,
+        on_delete = models.CASCADE
+    )
+    name = models.CharField(
+        max_length = 255
+    )
+class ClinicAddtionalFieldOption(models.Model):
+    parent = models.ForeignKey(
+        to = ClinicAddtionalField,
+        on_delete = models.CASCADE
+    )
+    value = models.CharField(
+        max_length = 255
+    )
 
 class UserEntry(models.Model):
     class Meta:
@@ -251,6 +271,20 @@ class UserEntry(models.Model):
         self.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
         self.matched_invite = invite    
         self.save()
+class UserEntryAdditionalItem(models.Model):
+    parent = models.ForeignKey(
+        to = UserEntry,
+        on_delete = models.CASCADE
+    )
+    question = models.ForeignKey(
+        to = ClinicAddtionalField,
+        on_delete = models.CASCADE
+    )
+    chosen_option = models.ForeignKey(
+        to = ClinicAddtionalFieldOption,
+        on_delete = models.CASCADE
+    )
+    
 class UserEntryTimeFrame(models.Model):
     class Meta:
         verbose_name = 'キャンまち明細'
