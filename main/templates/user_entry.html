@@ -20,11 +20,23 @@
     .form-check-label {
       margin: 0 3px 0 0;
     }
-
+    label{
+      margin-bottom: 0;
+    }
     span.errormsg {
       color: red;
       font-size: 12px;
 
+    }
+    .condition {
+      display: block;
+      background-color:teal;
+      color: white;
+      border-radius: 3px;
+      padding: 3px 10px;
+      margin-bottom: 5px;
+      font-size: 12px;
+      line-height: 14px;
     }
     @media screen and (max-width: 480px){
       h1, h2, h3 {
@@ -56,12 +68,12 @@
       <input type="hidden" name="clinic" id= "id_clinic" value="{{ clinic }}">
       
       <div class="form-group">
-          <label for="id_nickname" class="control-label">名前(ニックネーム可)</label><span class="badge badge-danger">必須</span>
+          <span class="condition"><label for="id_nickname" class="control-label">名前(ニックネーム可)</label><span class="badge badge-danger">必須</span></span>
           <input type="text" name = 'nickname' id = 'id_nickname' class="form-control" value="{{ instance.nickname }}">
       </div>
       {{ form.nickname.errors }}
 
-      <label for="no_specific_time">ご希望の時間帯</label>
+      <span class="condition"><label for="no_specific_time">ご希望の時間帯</label></span>
       {% for err in form.timeframes.errors %}
         <span class="errormsg"><i class="fas fa-exclamation"></i>{{ err }}</span>
       {% endfor %}
@@ -93,7 +105,7 @@
 
       </div>
 
-      <label>ご希望の期間</label>
+      <span class="condition"><label>ご希望の期間</label></span>
       {% for err in form.to_date.errors %}
         <span class="errormsg"><i class="fas fa-exclamation"></i>{{ err }}</span>
       {% endfor %}
@@ -116,8 +128,20 @@
             <input class="my-date-input" type="date" id = "id_to_date" name = 'to_date' value="{% if instance %}instance.to_date{% endif %}">
         </div>
       </div>
-    
+
+      {% for field in clinic_instance.additional_fields.all %}
+        <span class="condition">{{ field.name }}</span>
+        <div class="form-check form-check-inline">
+            {% for option in field.options.all %}
+              {% with field.id|concatwithdash:option.id as combine_key %}
+                <input type="checkbox" id="id_additional_field_{{ combine_key }}"  name="{{ combine_key }}" {% if instance|check_additional_field:combine_key  %}checked{% endif %} class="form-check-input">
+                <label for="id_additional_field_{{ combine_key }}" class="form-check-label">{{ option.value }}</label>
+              {% endwith %}
+            {% endfor %}
+        </div>
+      {% endfor %}
       {% csrf_token %}
+      <br>
       <button type="submit" class="btn btn-danger">登録</button>                                                   
     </form>
 

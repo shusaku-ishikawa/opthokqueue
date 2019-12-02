@@ -143,7 +143,7 @@ STATICFILES_DIRS = [
 MEDIA_ROOT = os.path.join(BASE_DIR,'media') # 追加
 MEDIA_URL = '/media_queue/' # 追加
 
-#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'おぷきた連絡ナビ <noreply@opthok-navi.com>'
 DEFAULT_FROM_EMAIL_FOR_QR = 'noreply@opthok-navi.com'
 

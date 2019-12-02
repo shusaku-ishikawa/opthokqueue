@@ -17,7 +17,7 @@ from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.views import generic 
 from .enums import *
-
+import re
 # Create your views here.
 class Login(LoginView): # 追加
     """ログインページ"""
@@ -36,7 +36,7 @@ class UserEntryView(generic.FormView):
     invalid_operation_template = 'user_entry_invalid_operation.html'
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['clinic'] = self.request.GET.get('clinic')
+        context['clinic_instance'] = Clinic.objects.get(id = self.request.GET.get('clinic'))
         context['time_frame_dict'] = TIME_FRAME_DICT
         context['day_of_week_dict'] = DAY_OF_WEEK_DICT
         context['operation_dict'] = OPERATION_DICT
@@ -55,7 +55,18 @@ class UserEntryView(generic.FormView):
         return context
 
     def form_valid(self, form):
-        form.save(commit = True)
+        instance = form.save(commit = True)
+        instance.additional_items.all().delete()
+        
+        params = self.request.POST.copy()
+        additional_fields = [key for key in params if re.fullmatch('\d+\-\d+', key)]
+        for additional_field in additional_fields:
+            (field_id, option_id) = additional_field.split('-')
+            field_instance = ClinicAdditionalField.objects.get(id = field_id)
+            option_instance = ClinicAdditionalFieldOption.objects.get(id = option_id)
+
+            additional_item = UserEntryAdditionalItem(parent = instance, question = field_instance, chosen_option = option_instance)
+            additional_item.save()
         return render(self.request, self.success_template)
 
     def form_invalid(self, form):
@@ -87,9 +98,19 @@ class ClinicAdminView(LoginRequiredMixin, generic.TemplateView):
             params = request.POST.copy()
             params['clinic'] = request.user.id
             create_form = self.create_form_class(params or None)
+            additional_fields = [key for key in params if re.fullmatch('\d+\-\d+', key)]
+
             if create_form.is_valid():
                 # if success
-                create_form.save()
+                instance = create_form.save()
+                for additional_field in additional_fields:
+                    (field_id, option_id) = additional_field.split('-')
+                    field_instance = ClinicAdditionalField.objects.get(id = field_id)
+                    option_instance = ClinicAdditionalFieldOption.objects.get(id = option_id)
+
+                    additional_item = ClinicInviteAdditionalItem(parent = instance, question = field_instance, chosen_option = option_instance)
+                    additional_item.save()
+
                 messages.success(request, '登録内容を保存しました。')
     
         elif action == 'end':

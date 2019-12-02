@@ -49,7 +49,23 @@ class UserEntryTimeFrameAdmin(admin.ModelAdmin):
 class ClinicInviteAdmin(admin.ModelAdmin):
     list_display = ('clinic', 'date', 'start_time')
 
+class ClinicAdditionalFieldAdmin(admin.ModelAdmin):
+    list_display = ('clinic', 'name')
+
+class ClinicAdditionalFieldOptionAdmin(admin.ModelAdmin):
+    list_display = ('parent', 'value')
+class ClinicInviteAdditionalItemAdmin(admin.ModelAdmin):
+    list_display = ('parent', 'question', 'chosen_option')
+
+class UserEntryAdditionalItemAdmin(admin.ModelAdmin):
+    list_display = ('parent', 'question', 'chosen_option')
+
+
 admin.site.register(Clinic, MyUserAdmin)
 admin.site.register(UserEntry, UserEntryAdmin)
 admin.site.register(UserEntryTimeFrame, UserEntryTimeFrameAdmin)
 admin.site.register(ClinicInvite, ClinicInviteAdmin)
+admin.site.register(ClinicAdditionalField, ClinicAdditionalFieldAdmin)
+admin.site.register(ClinicAdditionalFieldOption, ClinicAdditionalFieldOptionAdmin)
+admin.site.register(ClinicInviteAdditionalItem, ClinicInviteAdditionalItemAdmin)
+admin.site.register(UserEntryAdditionalItem, UserEntryAdditionalItemAdmin)

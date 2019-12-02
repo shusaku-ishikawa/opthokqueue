@@ -1,4 +1,5 @@
 {% extends 'admin-base.html' %}
+{% load myfilters %}
 {% block title %}
 管理画面
 {% endblock %}
@@ -25,6 +26,9 @@
     input.form-control:read-only {
         font-size: 14px;
         padding: 5px;
+    }
+    #id_start_time {
+        background-color: white;
     }
 
     ul {
@@ -90,7 +94,54 @@
         background-color: lightgreen;
         color: white;
     }
-    
+    .additional_field {
+        display: block;
+    }
+    .condition {
+        display: block;
+        background-color: teal;
+        color: white;
+        font-size: 14px;
+        padding: 0 10px;
+        margin-top: 10px;
+        border-radius: 3px;
+    }
+    label.form-check-label {
+      font-size: 12px;
+    }
+    .form-check-label {
+      margin: 0 3px 0 0;
+    }
+    fieldset {
+        border:gray 1px solid;
+    }
+    legend {
+        font-size: 14px;
+    }
+    .no-exisiting-entry {
+        color: gray;
+        font-size: 14px;
+    }
+    .table-wrapper {
+        overflow-x: scroll;
+        /* width: 100%; */
+    }
+    table {
+        border-collapse:collapse;
+        /* width: 100%; */
+        /* min-width: 100%; */
+    }
+    tr {
+        border-bottom: lightgray 1px solid;
+    }
+    td, th {
+        font-size: 12px;
+        white-space: nowrap;
+        padding: 3px 5px;
+    }
+    .delete-message {
+        cursor: pointer;
+    }
     @media screen and (max-width: 480px){
       h1, h2, h3 {
         font-size: 20px;
@@ -121,24 +172,26 @@
 {% endblock %}
 {% block header %}管理画面{% endblock %}
 {% block content %}
-  
     <form method="post">
         {% for message in messages %}
             {% if message.tags == 'success' %} 
-            <div class="row">
+            <div class="row wrapper-row">
                 <div class="col-12">
                     <div class="alert alert-success" role="alert">
                     <div class="row">
                         <div class="col-1">
                         <i class="fa fa-check"></i> 
                         </div>
-                        <div class="col-10">
+                        <div class="col-9">
                             {{ message }}
                         </div>
+                        <div class="col-1">
+                            <span class="delete-message">×</span>
+                        </div>
                     </div>
-                    </div>      
                 </div>
-            </div> 
+                </div>
+            </div>
             {% endif %}
         {% endfor %}
         <input type="hidden" name="action" value="start">
@@ -147,14 +200,27 @@
             <div class="col-12">
                 <div class="row invite-row">
                     {{ create_form.date.error }}
-                    {{ create_form.start_time.error }}     
+                    {{ create_form.start_time.error }}   
+                    <div class="col-12 tight">
+                        <span class="condition">日時</span>  
+                    </div>
                     <div class="col-6 tight">
                         {{ create_form.date }}
                     </div>
                     <div class="col-6 tight">
                         {{ create_form.start_time }}
                     </div>
-                    
+                    <div class="col-12 tight">
+                        {% for field in request.user.additional_fields.all %}
+                            <span class="condition">{{ field.name }}</span>
+                            <div class="form-check form-check-inline">
+                                {% for option in field.options.all %}
+                                    <input type="checkbox" id="id_additional_field_{{ option.id }}"  name="{{ field.id }}-{{ option.id }}" class="form-check-input">
+                                    <label for="id_additional_field_{{ option.id }}" class="form-check-label">{{ option.value }}</label>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
                     <div class="col-12 tight">
                         <button class="btn btn-block btn-danger create-btn">募集を開始する</button> 
                     </div>
@@ -163,53 +229,65 @@
         </div>
         {% csrf_token %}
     </form>
-
-    <h4 class="text-center title">募集中一覧</h4> 
-    <form method="post">
-        <input type="hidden" name="action" value="end">
-        {% for invite in object_list %}
-            <div class="row invite-row">
-                <div class="col-1 text-center tight">
-                    <input type="checkbox" name="invite_{{ invite.id }}" class="my-checkbox">
-                </div>
-                <div class="col-4 text-center tight">
-                    <input readonly type="text" value="{{ invite.date|date:"Y/m/d" }}" class="form-control">
-                </div>
-                <div class="col-4 text-center tight">
-                    <input readonly type="text" value="{{ invite.timeframe_readable }}" class="form-control">
-                </div>
-                <div class="col-2 text-center tight">
-                    <input readonly type="text" class="form-control" value="{{ invite.matched_count }}名">
-                </div>
-                <div class="col-1 text-center tight">
-                    <div class="expand-btn">+</div>
-                </div>
-                <div class="col-12 matched-entry-div tight close">
-                    
-                    {% for match in invite.matched.all %}
-                        <div class="row matched-entry-row">
-                            <div class="col-5 tight">
-                                {{ match.nickname }}
-                            </div>
-                            <div class="col-7 tight">
-                                {{ match.email }}
-                            </div>
-                        </div>
-                        
+    {% if object_list %}
+        <form method="post">
+            <input type="hidden" name="action" value="end">
+            <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>日時</th>
+                        <th>拡張項目</th>
+                        <th>マッチ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for invite in object_list %}
+                    <tr>
+                        <td>                        
+                            <input type="checkbox" name="invite_{{ invite.id }}" class="my-checkbox">
+                        </td>
+                        <td>
+                            {{ invite.date|date:"Y/m/d" }} {{ invite.start_time }}
+                        </td>
+                        <td>
+                            {% for field in invite.clinic.additional_fields.all %}
+                                {{ field.name }}:
+                                {% for op in invite|invited_options:field %}
+                                    {% if not forloop.first %},{% endif %}
+                                    {{ op.value }}
+                                {% endfor %}
+                                <br>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            {% if invite.matched %}
+                                {% for user in invite.matched.all %}
+                                    {{ user.nickname }}({{ user.email }})<br>
+                                {% endfor %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>   
+                    </tr>
                     {% endfor %}
-                </div>
-            </div>
-           
-        {% endfor %}
-        <button class="btn btn-block btn-primary delete-btn">募集を終了する</button> 
-        {% csrf_token %}            
-    </form>
+                </tbody>
+            </table>
+        </div>
+            <button class="btn btn-block btn-primary delete-btn">募集を終了する</button> 
+            {% csrf_token %}            
+        </form>
+        {% else %}
+            <span class="no-exisiting-entry">現在募集中の枠はありません。</span>
+        {% endif %}
 {% endblock %}
 
 {% block script %}
     <script>
         var $expand_btn = $('.expand-btn');
         var $start_time_input = $('#id_start_time');
+        var $delete_message = $('.delete-message');
         $(function() {
             $expand_btn.on('click', function() {
                 var $target = $(this).closest('.invite-row').find('.matched-entry-div');
@@ -226,6 +304,10 @@
               format: "H:mm",
               setCurrentTime: false,
             });
+            $delete_message.on('click', function() {
+                var $parent_row = $(this).closest('.wrapper-row');
+                $parent_row.remove();
+            })
         })
     </script>
 {% endblock %}

@@ -59,9 +59,10 @@ class UserEntryForm(forms.ModelForm):
         try:
             instance = UserEntry.objects.get(email = email, clinic = clinic)
         except UserEntry.DoesNotExist:
+            print('does not exitst')
             instance = UserEntry(**self.cleaned_data)
-            if commit:
-                instance.save()
+            instance.save()
+            print(timeframes)
         else:
             old_timeframes = UserEntryTimeFrame.objects.filter(user_entry = instance)
             old_timeframes.delete()
@@ -72,7 +73,6 @@ class UserEntryForm(forms.ModelForm):
             instance.to_date = self.cleaned_data['to_date']
             instance.is_anyday = self.cleaned_data['is_anyday']
             instance.save()
-
         if timeframes:
             for timeframe in timeframes:
                 (dow, tf) = timeframe.split('_')
@@ -81,7 +81,9 @@ class UserEntryForm(forms.ModelForm):
                     day_of_week = dow,
                     time_frame = tf
                 )
+                
                 obj.save()
+                print(obj)
         for invite in ClinicInvite.objects.all():
             if invite.match(instance):
                 instance.notify_match(invite)

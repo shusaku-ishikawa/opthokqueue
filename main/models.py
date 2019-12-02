@@ -15,6 +15,7 @@ from django.utils.safestring import mark_safe
 from django.template.loader import get_template
 from .enums import *
 from django.conf import settings
+import datetime
 class MyUserManager(BaseUserManager):
     """ユーザーマネージャー."""
 
@@ -115,6 +116,14 @@ def create_qrcode(sender, instance, created, **kwargs):
         instance.save()
 
 
+def has_common_member(a, b): 
+    a_set = set(a) 
+    b_set = set(b) 
+    if (a_set & b_set): 
+        return True 
+    else: 
+        return False
+            
 class ClinicInvite(models.Model):
     class Meta:
         verbose_name = '空き枠'
@@ -151,6 +160,8 @@ class ClinicInvite(models.Model):
     @property
     def day_of_week(self):
         return str(self.date.weekday())
+    
+
     def match(self, user_entry):
         if user_entry.matched_invite:
             print('already matched')
@@ -164,20 +175,45 @@ class ClinicInvite(models.Model):
         if user_entry.is_anytime:
             return True
         else:
-            pass
-            # for tf in user_entry.timeframes.all():
-            #     if tf.day_of_week == self.day_of_week:
-            #         if tf.time_frame == TIME_FRAME_ANYTIME:
-            #             return True
-            #         else:
-            #             if tf.time_frame == self.time_frame:
-            #                 return True
-            #             else:
-            #                 print('timeframe invalid')
-            #     else:
-            #         print(type(tf.day_of_week))
-            #         print(type(self.day_of_week))
-            #         print('day of week invaid{} {}'.format(tf.day_of_week, self.day_of_week))
+            print('match called')
+            for tf in user_entry.timeframes.all():
+                if tf.day_of_week == self.day_of_week:    
+                    if tf.time_frame == TIME_FRAME_ANYTIME:
+                        return True
+                    thresholds = {
+                        TIME_FRAME_9_12: {
+                            'start': datetime.time(hour = 9),
+                            'end': datetime.time(hour = 11, minute = 59)
+                        },
+                        TIME_FRAME_12_15: {
+                            'start': datetime.time(hour = 12),
+                            'end': datetime.time(hour = 14, minute = 59)
+                        },
+                        TIME_FRAME_15_18: {
+                            'start': datetime.time(hour = 15),
+                            'end': datetime.time(hour = 17, minute = 59)
+                        },
+                        TIME_FRAME_18_21: {
+                            'start': datetime.time(hour = 18),
+                            'end': datetime.time(hour = 20, minute = 59)
+                        }
+                    }
+                    item = thresholds[str(tf.time_frame)]
+                    if self.start_time >= item['start'] and self.start_time < item['end']:
+                        matched = True
+                        for field in self.clinic.additional_fields.all():
+                            invited_option_id_list = [item.chosen_option.id for item in self.additional_items.all() if item.question.id == field.id]
+                            user_entry_option_id_list = [item.chosen_option.id for item in user_entry.additional_items.all() if item.question.id == field.id]
+                            if not has_common_member(invited_option_id_list, user_entry_option_id_list):
+                                return False
+                        return True
+                        #user_entry.additional_items.all()
+                    else:
+                        print('start time not matched' + str(item['start']) + ' ' + str(item['end']), str(self.start_time))
+                else:
+                    print('day invalid')
+            else:
+                print('user entry timeframe empy')
         return False
     def notify_start(self):
         context = { 'object': self }
@@ -191,23 +227,30 @@ class ClinicInvite(models.Model):
         message = get_template('mail/new_candidate.txt').render(context)
         self.clinic.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
     
-    
-    @property
-    def timeframe_list(self):
-        return ['{}_{}'.format(tf.day_of_week, tf.time_frame) for tf in self.timeframes]
-
-class ClinicAddtionalField(models.Model):
+class ClinicAdditionalField(models.Model):
+    class Meta:
+        verbose_name = '医院拡張項目'
+        verbose_name_plural = '医院拡張項目'
+    def __str__(self):
+        return self.clinic.__str__() + self.name
     clinic = models.ForeignKey(
         to = Clinic,
-        on_delete = models.CASCADE
+        on_delete = models.CASCADE,
+        related_name = 'additional_fields'
     )
     name = models.CharField(
         max_length = 255
     )
-class ClinicAddtionalFieldOption(models.Model):
+class ClinicAdditionalFieldOption(models.Model):
+    class Meta:
+        verbose_name = '医院拡張項目選択肢'
+        verbose_name_plural = '医院拡張項目選択肢'
+    def __str__(self):
+        return self.parent.__str__() + ' ' + self.value
     parent = models.ForeignKey(
-        to = ClinicAddtionalField,
-        on_delete = models.CASCADE
+        to = ClinicAdditionalField,
+        on_delete = models.CASCADE,
+        related_name = 'options'
     )
     value = models.CharField(
         max_length = 255
@@ -265,26 +308,59 @@ class UserEntry(models.Model):
         send_mail(subject, message, from_email, [self.email], **kwargs)
     
     def notify_match(self, invite):
-        context = { "clinic": invite.clinic.name, "nickname": self.nickname, "date": invite.date, "timeframe": TIME_FRAME_DICT[invite.time_frame], 'clinic_phone': self.clinic.phone }
+        context = { "clinic": invite.clinic.name, "nickname": self.nickname, "date": invite.date, "timeframe": invite.start_time, 'clinic_phone': self.clinic.phone }
         subject = '予約空き情報[{}]'.format(self.clinic.name)
         message = get_template('mail/match.txt').render(context)
         self.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
         self.matched_invite = invite    
         self.save()
+    @property
+    def timeframe_list(self):
+        return ['{}_{}'.format(tf.day_of_week, tf.time_frame) for tf in self.timeframes.all()]
+
+
 class UserEntryAdditionalItem(models.Model):
+    class Meta:
+        verbose_name = 'キャンまち拡張項目'
+        verbose_name_plural = 'キャンまち拡張項目'
+
+    def __str__(self):
+        return self.parent.__str__() + ' ' + self.question.__str__() + ' ' + self.chosen_option.__str__()
+
     parent = models.ForeignKey(
         to = UserEntry,
+        related_name = 'additional_items',
         on_delete = models.CASCADE
     )
     question = models.ForeignKey(
-        to = ClinicAddtionalField,
+        to = ClinicAdditionalField,
         on_delete = models.CASCADE
     )
     chosen_option = models.ForeignKey(
-        to = ClinicAddtionalFieldOption,
+        to = ClinicAdditionalFieldOption,
         on_delete = models.CASCADE
     )
-    
+class ClinicInviteAdditionalItem(models.Model):
+    class Meta:
+        verbose_name = '空き枠拡張項目'
+        verbose_name_plural = '空き枠キャンまち拡張項目'
+    def __str__(self):
+        return self.parent.__str__() + ' ' + self.question.__str__() + ' ' + self.chosen_option.__str__()
+        
+    parent = models.ForeignKey(
+        to = ClinicInvite,
+        on_delete = models.CASCADE,
+        related_name = 'additional_items',
+    )
+    question = models.ForeignKey(
+        to = ClinicAdditionalField,
+        on_delete = models.CASCADE
+    )
+    chosen_option = models.ForeignKey(
+        to = ClinicAdditionalFieldOption,
+        on_delete = models.CASCADE
+    )
+
 class UserEntryTimeFrame(models.Model):
     class Meta:
         verbose_name = 'キャンまち明細'
