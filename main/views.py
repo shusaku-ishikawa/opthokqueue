@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.utils.safestring import mark_safe
 import json
 
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.views import generic
 from .models import * 
 from django.contrib.auth.views import *
@@ -59,7 +59,7 @@ class UserEntryView(generic.FormView):
         instance.additional_items.all().delete()
         
         params = self.request.POST.copy()
-        additional_fields = [key for key in params if re.fullmatch('\d+\-\d+', key)]
+        additional_fields = [key for key in params if re.fullmatch(r'\d+\-\d+', key)]
         for additional_field in additional_fields:
             (field_id, option_id) = additional_field.split('-')
             field_instance = ClinicAdditionalField.objects.get(id = field_id)
@@ -98,7 +98,7 @@ class ClinicAdminView(LoginRequiredMixin, generic.TemplateView):
             params = request.POST.copy()
             params['clinic'] = request.user.id
             create_form = self.create_form_class(params or None)
-            additional_fields = [key for key in params if re.fullmatch('\d+\-\d+', key)]
+            additional_fields = [key for key in params if re.fullmatch(r'\d+\-\d+', key)]
 
             if create_form.is_valid():
                 # if success
@@ -119,10 +119,13 @@ class ClinicAdminView(LoginRequiredMixin, generic.TemplateView):
                     (_, invite_id) = key.split('_')
                     instance_to_delete = get_object_or_404(ClinicInvite, id = int(invite_id))
                     instance_to_delete.delete()
+                    for user_entry in instance_to_delete.matched_user_entries:
+                        user_entry.notify_invite_expiry()
+                        print(f'{user_entry} stoped and mailed')
                     messages.success(request, 'ID:{}の募集を停止しました'.format(invite_id))
             
-        return render(request, self.template_name, context = self.get_context_data())
-
+        #return render(request, self.template_name, context = self.get_context_data())
+        return redirect('main:clinicadmin')
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["create_form"] = self.create_form

@@ -122,10 +122,10 @@
           </div>
         </div>
         <div class="col-md-9">
-            <input type="radio" name="is_anyday" value="False">
-            <input class="my-date-input" type="date" id = "id_from_date" name = 'from_date' value="{% if instance %}instance.from_date{% endif %}">
+            <input type="radio" name="is_anyday" value="False" {% if not instance.is_anyday %}checked{% endif %}>
+            <input class="my-date-input" type="date" id = "id_from_date" name = 'from_date' value="{% if instance %}{{ instance.from_date|date:'Y-m-d' }}{% endif %}">
             <span>〜</span>
-            <input class="my-date-input" type="date" id = "id_to_date" name = 'to_date' value="{% if instance %}instance.to_date{% endif %}">
+            <input class="my-date-input" type="date" id = "id_to_date" name = 'to_date' value="{% if instance %}{{ instance.to_date|date:'Y-m-d' }}{% endif %}">
         </div>
       </div>
 
@@ -142,9 +142,14 @@
       {% endfor %}
       {% csrf_token %}
       <br>
-      <button type="submit" class="btn btn-danger">登録</button>                                                   
+      <button type="submit" class="btn btn-danger">
+        {% if instance %}
+          更新
+        {% else %}
+          登録
+        {% endif %}
+      </button>                                                   
     </form>
-
 {% endblock %}
 {% block script %}
 <script>

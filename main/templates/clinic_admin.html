@@ -13,7 +13,7 @@
     input.my-date-input {
       border-radius: 5px;
       color: gray;
-      font-size: 12px;
+      font-size: 14px;
       display: inline-block;
     }
     select.form-control {
@@ -52,7 +52,7 @@
     }
     div.matched-count {
         border-radius: 50%;
-        font-size: 12px;
+        font-size: 14px;
         background-color: blue;
         color: white;
         height: 100%;
@@ -64,7 +64,7 @@
     }
     div.matched-entry-row {
         vertical-align: middle;
-        font-size: 12px;
+        font-size: 14px;
         margin: 2px 0;
         padding: 2px;
         border-radius: 5px;
@@ -107,7 +107,7 @@
         border-radius: 3px;
     }
     label.form-check-label {
-      font-size: 12px;
+      font-size: 14px;
     }
     .form-check-label {
       margin: 0 3px 0 0;
@@ -126,19 +126,14 @@
         overflow-x: scroll;
         /* width: 100%; */
     }
-    table {
-        border-collapse:collapse;
-        /* width: 100%; */
-        /* min-width: 100%; */
-    }
     tr {
         border-bottom: lightgray 1px solid;
     }
     td, th {
-        font-size: 12px;
+        font-size: 14px;
         white-space: nowrap;
         padding: 3px 5px;
-    }
+    } */
     .delete-message {
         cursor: pointer;
     }
@@ -233,7 +228,7 @@
         <form method="post">
             <input type="hidden" name="action" value="end">
             <div class="table-wrapper">
-            <table>
+            <table class="table">
                 <thead>
                     <tr>
                         <th></th>
@@ -245,29 +240,40 @@
                 <tbody>
                 {% for invite in object_list %}
                     <tr>
-                        <td>                        
+                        <td>                       
                             <input type="checkbox" name="invite_{{ invite.id }}" class="my-checkbox">
                         </td>
                         <td>
-                            {{ invite.date|date:"Y/m/d" }} {{ invite.start_time }}
+                            {{ invite.date|date:"Y/m/d" }} [{{ invite.start_time }}]
                         </td>
                         <td>
+                            <table>
                             {% for field in invite.clinic.additional_fields.all %}
-                                {{ field.name }}:
-                                {% for op in invite|invited_options:field %}
-                                    {% if not forloop.first %},{% endif %}
-                                    {{ op.value }}
-                                {% endfor %}
-                                <br>
+                                <tr>
+                                    <th>
+                                    {{ field.name }}:
+                                    </th>
+                                    <td>
+                                    {% for op in invite|invited_options:field %}
+                                        {% if not forloop.first %},{% endif %}
+                                        {{ op.value }}
+                                    {% endfor %}
+                                    </td>
+                                </tr>
                             {% endfor %}
+                            </table>
                         </td>
                         <td>
-                            {% if invite.matched %}
-                                {% for user in invite.matched.all %}
-                                    {{ user.nickname }}({{ user.email }})<br>
+                            {% if invite.matched_user_entries %}
+                            <ul>
+                                {% for user in invite.matched_user_entries %}
+                                <li>
+                                    {{ user.nickname }}({{ user.email }})
+                                </li>
                                 {% endfor %}
+                            </ul>
                             {% else %}
-                                -
+                                [マッチしているエントリはありません]
                             {% endif %}
                         </td>   
                     </tr>
@@ -300,9 +306,16 @@
                     $(this).text('+');
                 }
             })
-            $start_time_input.timeDropper({
-              format: "H:mm",
-              setCurrentTime: false,
+            $start_time_input.timepicker({
+                timeFormat: 'H:mm',
+                interval: 5,
+                minTime: '8',
+                maxTime: '9:00pm',
+                defaultTime: '10',
+                startTime: '8:00',
+                dynamic: false,
+                dropdown: true,
+                scrollbar: true
             });
             $delete_message.on('click', function() {
                 var $parent_row = $(this).closest('.wrapper-row');

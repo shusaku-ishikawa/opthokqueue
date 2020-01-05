@@ -41,7 +41,7 @@ class MyUserAdmin(UserAdmin):
     ordering = ('name',)
 
 class UserEntryAdmin(admin.ModelAdmin):
-    list_display = ('matched_invite', 'clinic', 'email', 'nickname', 'from_date', 'to_date', 'is_anytime', 'is_anyday')
+    list_display = ('clinic', 'email', 'nickname', 'from_date', 'to_date', 'is_anytime', 'is_anyday')
 
 class UserEntryTimeFrameAdmin(admin.ModelAdmin):
     list_display = ('user_entry', 'day_of_week_readable', 'timeframe_readable')
@@ -60,7 +60,8 @@ class ClinicInviteAdditionalItemAdmin(admin.ModelAdmin):
 class UserEntryAdditionalItemAdmin(admin.ModelAdmin):
     list_display = ('parent', 'question', 'chosen_option')
 
-
+class MatchAdmin(admin.ModelAdmin):
+    list_display = ('user_entry', 'clinic_invite')
 admin.site.register(Clinic, MyUserAdmin)
 admin.site.register(UserEntry, UserEntryAdmin)
 admin.site.register(UserEntryTimeFrame, UserEntryTimeFrameAdmin)
@@ -69,3 +70,4 @@ admin.site.register(ClinicAdditionalField, ClinicAdditionalFieldAdmin)
 admin.site.register(ClinicAdditionalFieldOption, ClinicAdditionalFieldOptionAdmin)
 admin.site.register(ClinicInviteAdditionalItem, ClinicInviteAdditionalItemAdmin)
 admin.site.register(UserEntryAdditionalItem, UserEntryAdditionalItemAdmin)
+admin.site.register(Match, MatchAdmin)

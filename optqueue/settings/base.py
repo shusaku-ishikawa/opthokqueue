@@ -11,10 +11,11 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+from pathlib import Path
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
+BASE_DIR = Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))).parent
+print(BASE_DIR)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
@@ -24,9 +25,6 @@ SECRET_KEY = '0o+i3#+)j9fcn(@*fz0ams@5nw)@feb(%k-a$1vuhe3ro0)1^&'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
-ALLOWED_HOSTS = ["*"]
-
 
 # Application definition
 
@@ -77,30 +75,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'optqueue.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/2.2/ref/settings/#databases
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'queue',
-#         'USER': 'root',
-#         'PASSWORD': '332191-Aa',
-#         'HOST': '127.0.0.1',
-#         'PORT': '',
-#         'OPTIONS': {
-#             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-#         },
-#     }
-# }
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
-}
-
-
 
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
@@ -143,34 +117,6 @@ STATICFILES_DIRS = [
 MEDIA_ROOT = os.path.join(BASE_DIR,'media') # 追加
 MEDIA_URL = '/media_queue/' # 追加
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'おぷきた連絡ナビ <noreply@opthok-navi.com>'
-DEFAULT_FROM_EMAIL_FOR_QR = 'noreply@opthok-navi.com'
-
-#DEFAULT_FROM_EMAIL = 'noreply@opthok-navi.com'
-
-DEFAULT_CHARSET = 'utf-8'
-EMAIL_HOST = 'opthok-navi.com'
-EMAIL_PORT = 587
-EMAIL_HOST_USER = 'noreply@opthok-navi.com'
-EMAIL_HOST_PASSWORD = 'P@ssw0rd'
-EMAIL_USE_SSL = False
-
-# JOBs
-CRONJOBS = [
-    ('* * * * *', 'django.core.management.call_command', ['reply_emails']),
-]
-CRONTAB_LOCK_JOBS = False
-
-
-# DEFAULT_FROM_EMAIL = 'contact@stoneriver.info'
-
-# DEFAULT_CHARSET = 'utf-8'
-# EMAIL_HOST = 'stoneriver.info'
-# EMAIL_PORT = 587
-# EMAIL_HOST_USER = 'contact@stoneriver.info'
-# EMAIL_HOST_PASSWORD = '332191-Aa'
-# EMAIL_USE_SSL = False
 
 
 

@@ -153,18 +153,22 @@ class ClinicInvite(models.Model):
     # @property
     # def timeframe_readable(self):
     #     return TIME_FRAME_DICT[self.time_frame]
-    @property
-    def matched_count(self):
-        return len(self.matched.all())
 
     @property
     def day_of_week(self):
         return str(self.date.weekday())
     
+    @property
+    def matched_user_entries(self):
+        matched = Match.objects.filter(clinic_invite = self)
+        return [ue.user_entry for ue in matched]
+    @property
+    def matched_count(self):
+        return len(self.matched_user_entries)
 
     def match(self, user_entry):
-        if user_entry.matched_invite:
-            print('already matched')
+        if user_entry in self.matched_user_entries:
+            print('already matched ')
             return False
         if user_entry.from_date and user_entry.from_date > self.date:
             print('from date invalid')
@@ -263,14 +267,14 @@ class UserEntry(models.Model):
     def __str__(self):
         return self.nickname
 
-    matched_invite = models.ForeignKey(
-        verbose_name = 'マッチした空き枠',
-        to = ClinicInvite,
-        null = True,
-        blank = True,
-        on_delete = models.CASCADE,
-        related_name = 'matched'
-    )
+    # matched_invite = models.ForeignKey(
+    #     verbose_name = 'マッチした空き枠',
+    #     to = ClinicInvite,
+    #     null = True,
+    #     blank = True,
+    #     on_delete = models.CASCADE,
+    #     related_name = 'matched'
+    # )
 
     clinic = models.ForeignKey(
         verbose_name = '医院',
@@ -312,11 +316,19 @@ class UserEntry(models.Model):
         subject = '予約空き情報[{}]'.format(self.clinic.name)
         message = get_template('mail/match.txt').render(context)
         self.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
-        self.matched_invite = invite    
-        self.save()
+        
+    def notify_invite_expiry(self, invite):
+        context = { "clinic": invite.clinic.name, "nickname": self.nickname, "date": invite.date, "timeframe": invite.start_time, 'clinic_phone': self.clinic.phone }
+        subject = '予約空き情報[{}]'.format(self.clinic.name)
+        message = get_template('mail/invite_expiry.txt').render(context)
+        self.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
+        
     @property
     def timeframe_list(self):
         return ['{}_{}'.format(tf.day_of_week, tf.time_frame) for tf in self.timeframes.all()]
+    @property
+    def matched_invites(self):
+        return Match.objects.filter(user_entry = self)
 
 
 class UserEntryAdditionalItem(models.Model):
@@ -386,3 +398,17 @@ class UserEntryTimeFrame(models.Model):
     def timeframe_readable(self):
         return TIME_FRAME_DICT[self.time_frame]
 
+class Match(models.Model):
+    class Meta:
+        verbose_name = 'キャン待ちマッチング'
+        verbose_name_plural = 'キャン待ちマッチング'
+    user_entry = models.ForeignKey(
+        to = UserEntry,
+        on_delete = models.CASCADE,
+        
+    )
+    clinic_invite = models.ForeignKey(
+        to = ClinicInvite,
+        on_delete = models.CASCADE,
+        related_name = 'matched'
+    )
