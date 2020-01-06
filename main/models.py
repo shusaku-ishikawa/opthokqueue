@@ -267,15 +267,6 @@ class UserEntry(models.Model):
     def __str__(self):
         return self.nickname
 
-    # matched_invite = models.ForeignKey(
-    #     verbose_name = 'マッチした空き枠',
-    #     to = ClinicInvite,
-    #     null = True,
-    #     blank = True,
-    #     on_delete = models.CASCADE,
-    #     related_name = 'matched'
-    # )
-
     clinic = models.ForeignKey(
         verbose_name = '医院',
         to = Clinic,
@@ -317,12 +308,17 @@ class UserEntry(models.Model):
         message = get_template('mail/match.txt').render(context)
         self.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
         
-    def notify_invite_expiry(self, invite):
+    def notify_invite_taken(self, invite):
         context = { "clinic": invite.clinic.name, "nickname": self.nickname, "date": invite.date, "timeframe": invite.start_time, 'clinic_phone': self.clinic.phone }
         subject = '予約空き情報[{}]'.format(self.clinic.name)
-        message = get_template('mail/invite_expiry.txt').render(context)
+        message = get_template('mail/invite_taken.txt').render(context)
         self.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
-        
+    def notify_entry_expiry(self, link_url):
+        context = { "clinic": self.clinic.name, "nickname": self.nickname, "to_date": self.to_date, 'link_url': link_url }
+        subject = '予約空き情報[{}]'.format(self.clinic.name)
+        message = get_template('mail/entry_expiry.txt').render(context)
+        self.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
+    
     @property
     def timeframe_list(self):
         return ['{}_{}'.format(tf.day_of_week, tf.time_frame) for tf in self.timeframes.all()]

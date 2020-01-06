@@ -2,6 +2,7 @@
 from .base import *
 
 ALLOWED_HOSTS = ["localhost"]
+HOST_NAME = 'http://localhost:8000'
 
 DATABASES = {
     'default': {

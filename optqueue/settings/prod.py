@@ -1,6 +1,7 @@
 from .base import *
 
 ALLOWED_HOSTS = ["opthok-navi.com"]
+HOST_NAME = 'http://opthok-navi.com'
 
 DATABASES = {
     'default': {

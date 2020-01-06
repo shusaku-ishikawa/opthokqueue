@@ -120,7 +120,7 @@ class ClinicAdminView(LoginRequiredMixin, generic.TemplateView):
                     instance_to_delete = get_object_or_404(ClinicInvite, id = int(invite_id))
                     instance_to_delete.delete()
                     for user_entry in instance_to_delete.matched_user_entries:
-                        user_entry.notify_invite_expiry()
+                        user_entry.notify_invite_taken()
                         print(f'{user_entry} stoped and mailed')
                     messages.success(request, 'ID:{}の募集を停止しました'.format(invite_id))
             
