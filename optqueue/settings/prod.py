@@ -20,6 +20,7 @@ DATABASES = {
 # JOBs
 CRONJOBS = [
     ('* * * * *', 'django.core.management.call_command', ['reply_emails']),
+    ('5 0 * * *', 'django.core.management.call_command', ['check_user_entry_expiry']),
 ]
 CRONTAB_LOCK_JOBS = False
 
