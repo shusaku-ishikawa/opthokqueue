@@ -14,6 +14,8 @@ from main.models import *
 class Command(BaseCommand):
     help = 'user_entryの期限を確認する'
     def handle(self, *args, **options):
+        logger = logging.getLogger('batch_logger')
+        logger.info(f'{os.path.basename(__file__)} has been started')
         for user_entry in UserEntry.objects.all():
             if not user_entry.to_date: # 無期限のものは無視
                 pass
@@ -24,4 +26,5 @@ class Command(BaseCommand):
                 user_entry.delete()
             else:
                 pass
+        logger.info(f'{os.path.basename(__file__)} has been completed')
 
