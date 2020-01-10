@@ -1,16 +1,10 @@
-import json
-import logging
-import os
+from django_cron import CronJobBase, Schedule
 from datetime import datetime, timedelta
-import time
 from django.core.management.base import BaseCommand
 from django.template.loader import get_template
+import os, json, logging, imaplib, smtplib, email, re, time
+from .base import MyCommandBase
 
-import imaplib
-import smtplib
-import email
-import re
-import time
 def get_smtp_server(host, user, passwd):
     server = smtplib.SMTP(host, 587)
     server.login(user, passwd)
@@ -29,11 +23,13 @@ def sendmail(server, mailto, mailfrom, subject, body):
     
     server.send_message(msg)
 
-class Command(BaseCommand):
-    help = 'メールチェック'
-    def handle(self, *args, **options):
-        #baseurl = 'http://stoneriver.info'
-        # baseurl = 'http://localhost:8/queue/userentry'
+class Command(MyCommandBase):
+    RUN_EVERY_MINS = 1 # every 2 hours
+    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+    code = 'replay_email' # a unique code
+
+    def custom_action(self, logger):
+        logger.info(f'start {__class__.code}')
         baseurl = 'http://opthok-navi.com/queue/userentry'
         hostname = "opthok-navi.com"
         user = 'noreply'
@@ -41,7 +37,6 @@ class Command(BaseCommand):
         myaddress = '{}@{}'.format(user, hostname)
         i = imaplib.IMAP4(hostname, 143)
         i.login(user, passwd)
-        
         smtpserver = get_smtp_server(hostname, user, passwd)
         i.select("INBOX")
 
@@ -59,13 +54,14 @@ class Command(BaseCommand):
                 _, data = i.fetch(num,'(RFC822)')
                 msg = email.message_from_string(data[0][1].decode('utf8'))
                 fromaddr = msg.get('From') #print(data)
-                print(fromaddr)
                 m = re.search(r'(?<=\<).+\@.+(?=\>)', fromaddr)
                 if not m:
                     i.store(num, '+FLAGS', '\\Deleted')
                     continue
                 fromaddr = m.group(0)
                 subject = msg.get('Subject')
+                if not subject:
+                    continue
                 m = re.search(r'(?<=clinicId_).+', subject)
                 if not m:
                     i.store(num, '+FLAGS', '\\Deleted')
@@ -75,7 +71,9 @@ class Command(BaseCommand):
                 body = '以下のURLから希望の日時を登録してください。\n'
                 body += '{base}?email={email}&clinic={clinic}'.format(base = baseurl, email = fromaddr, clinic = clinic_id)
                 sendmail(smtpserver, fromaddr, myaddress, '希望日時入力', body)
+                logger.info(f'Sent email to {fromaddr}')
                 i.store(num, '+FLAGS', '\\Deleted')
                 time.sleep(3)
         i.expunge()
         quit_smtp_serevr(smtpserver)
+        logger.info(f'Finished {__class__.code}')

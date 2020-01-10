@@ -35,8 +35,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django_crontab',
-    'main'
+    'main',
+    'django_cron'
 ]
 
 AUTH_USER_MODEL = 'main.Clinic'
@@ -162,6 +162,9 @@ STATICFILES_DIRS = [
 MEDIA_ROOT = os.path.join(BASE_DIR,'media') # 追加
 MEDIA_URL = '/media_queue/' # 追加
 
-
+CRON_CLASSES = [
+    "main.cronjobs.replay_emails.Command",
+    # ...
+]
 
 
