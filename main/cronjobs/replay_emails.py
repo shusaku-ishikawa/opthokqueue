@@ -22,7 +22,6 @@ def sendmail(server, mailto, mailfrom, subject, body):
     msg["From"] = mailfrom
     
     server.send_message(msg)
-
 class Command(MyCommandBase):
     RUN_EVERY_MINS = 1 # every 2 hours
     schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
@@ -61,9 +60,13 @@ class Command(MyCommandBase):
                 fromaddr = m.group(0)
                 subject = msg.get('Subject')
                 if not subject:
+                    i.store(num, '+FLAGS', '\\Deleted')
+                    print('no subject found')
                     continue
+                print("searching clinic id")
                 m = re.search(r'(?<=clinicId_).+', subject)
                 if not m:
+                    
                     i.store(num, '+FLAGS', '\\Deleted')
                     continue
             

@@ -6,7 +6,7 @@ import os, json, logging, imaplib, smtplib, email, re, time
 from main.models import UserEntry
 from django.utils import timezone
 from .base import MyCommandBase
-
+from django.conf import settings
 class Command(MyCommandBase):
     RUN_EVERY_MINS = 1 # every 2 hours
     schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
