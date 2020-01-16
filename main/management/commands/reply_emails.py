@@ -1,9 +1,8 @@
-from django_cron import CronJobBase, Schedule
 from datetime import datetime, timedelta
 from django.core.management.base import BaseCommand
 from django.template.loader import get_template
 import os, json, logging, imaplib, smtplib, email, re, time
-from .base import MyCommandBase
+from django.conf import settings
 
 def get_smtp_server(host, user, passwd):
     server = smtplib.SMTP(host, 587)
@@ -22,14 +21,11 @@ def sendmail(server, mailto, mailfrom, subject, body):
     msg["From"] = mailfrom
     
     server.send_message(msg)
-class Command(MyCommandBase):
-    RUN_EVERY_MINS = 1 # every 2 hours
-    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
-    code = 'replay_email' # a unique code
-
-    def custom_action(self, logger):
-        logger.info(f'start {__class__.code}')
-        baseurl = 'http://opthok-navi.com/queue/userentry'
+class Command(BaseCommand):
+    def handle(self, *args, **options):
+        logger = logging.getLogger('batch_logger')
+        logger.info('Started reply email')
+        baseurl = f'{settings.HOST_NAME}/queue/userentry'
         hostname = "opthok-navi.com"
         user = 'noreply'
         passwd = 'P@ssw0rd'
@@ -79,4 +75,4 @@ class Command(MyCommandBase):
                 time.sleep(3)
         i.expunge()
         quit_smtp_serevr(smtpserver)
-        logger.info(f'Finished {__class__.code}')
+        logger.info('Finished reply email')

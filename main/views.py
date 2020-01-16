@@ -118,10 +118,10 @@ class ClinicAdminView(LoginRequiredMixin, generic.TemplateView):
                 if 'invite' in key and on_or_off == 'on':
                     (_, invite_id) = key.split('_')
                     instance_to_delete = get_object_or_404(ClinicInvite, id = int(invite_id))
-                    instance_to_delete.delete()
+                    
                     for user_entry in instance_to_delete.matched_user_entries:
-                        user_entry.notify_invite_taken()
-                        print(f'{user_entry} stoped and mailed')
+                        user_entry.notify_invite_taken(instance_to_delete)
+                    instance_to_delete.delete()
                     messages.success(request, 'ID:{}の募集を停止しました'.format(invite_id))
             
         #return render(request, self.template_name, context = self.get_context_data())
