@@ -99,18 +99,10 @@ class ClinicAdminView(LoginRequiredMixin, generic.TemplateView):
             params['clinic'] = request.user.id
             create_form = self.create_form_class(params or None)
             additional_fields = [key for key in params if re.fullmatch(r'\d+\-\d+', key)]
-
+            
             if create_form.is_valid():
                 # if success
-                instance = create_form.save()
-                for additional_field in additional_fields:
-                    (field_id, option_id) = additional_field.split('-')
-                    field_instance = ClinicAdditionalField.objects.get(id = field_id)
-                    option_instance = ClinicAdditionalFieldOption.objects.get(id = option_id)
-
-                    additional_item = ClinicInviteAdditionalItem(parent = instance, question = field_instance, chosen_option = option_instance)
-                    additional_item.save()
-
+                instance = create_form.save(additional_fields, True)
                 messages.success(request, '登録内容を保存しました。')
     
         elif action == 'end':

@@ -59,10 +59,9 @@ class UserEntryForm(forms.ModelForm):
         try:
             instance = UserEntry.objects.get(email = email, clinic = clinic)
         except UserEntry.DoesNotExist:
-            print('does not exitst')
+            
             instance = UserEntry(**self.cleaned_data)
             instance.save()
-            print(timeframes)
         else:
             old_timeframes = UserEntryTimeFrame.objects.filter(user_entry = instance)
             old_timeframes.delete()
@@ -73,6 +72,7 @@ class UserEntryForm(forms.ModelForm):
             instance.is_anyday = self.cleaned_data['is_anyday']
             instance.save()
         if timeframes:
+            print(timeframes)
             for timeframe in timeframes:
                 (dow, tf) = timeframe.split('_')
                 obj = UserEntryTimeFrame(
@@ -83,7 +83,7 @@ class UserEntryForm(forms.ModelForm):
                 
                 obj.save()
                 print(obj)
-        for invite in ClinicInvite.objects.all():
+        for invite in ClinicInvite.objects.filter(clinic = clinic):
             if invite.match(instance):
                 new_match = Match(user_entry = instance, clinic_invite = invite)
                 new_match.save()
@@ -102,9 +102,16 @@ class ClinicInviteForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['date'].widget.attrs['class'] = 'form-control'
         self.fields['start_time'].widget.attrs['class'] = 'form-control'
-    def save(self, commit = True):
+    def save(self, additional_fields, commit = True):
         instance = super().save(commit)
-        for user_entry in UserEntry.objects.all():
+        for additional_field in additional_fields:
+            (field_id, option_id) = additional_field.split('-')
+            field_instance = ClinicAdditionalField.objects.get(id = field_id)
+            option_instance = ClinicAdditionalFieldOption.objects.get(id = option_id)
+
+            additional_item = ClinicInviteAdditionalItem(parent = instance, question = field_instance, chosen_option = option_instance)
+            additional_item.save()
+        for user_entry in UserEntry.objects.filter(clinic = instance.clinic):
             if instance.match(user_entry):
                 user_entry.notify_match(instance)
                 new_match = Match(user_entry = user_entry, clinic_invite = instance)

@@ -116,7 +116,9 @@ def create_qrcode(sender, instance, created, **kwargs):
         instance.save()
 
 
-def has_common_member(a, b): 
+def has_common_member(a, b):
+    if len(a) == 0 and len(b) == 0:
+        return True
     a_set = set(a) 
     b_set = set(b) 
     if (a_set & b_set): 
@@ -145,15 +147,6 @@ class ClinicInvite(models.Model):
         default=timezone.now,
     )
 
-    # time_frame = models.CharField(
-    #     verbose_name = '時間帯',
-    #     max_length = 10,
-    #     choices = [(key, value) for (key, value) in TIME_FRAME_DICT.items() if key != TIME_FRAME_ANYTIME]
-    # )
-    # @property
-    # def timeframe_readable(self):
-    #     return TIME_FRAME_DICT[self.time_frame]
-
     @property
     def day_of_week(self):
         return str(self.date.weekday())
@@ -180,8 +173,11 @@ class ClinicInvite(models.Model):
             return True
         else:
             print('match called')
+            print(user_entry.timeframes.all())
             for tf in user_entry.timeframes.all():
-                if tf.day_of_week == self.day_of_week:    
+                print(f'checking {tf}')
+                if tf.day_of_week == self.day_of_week:
+
                     if tf.time_frame == TIME_FRAME_ANYTIME:
                         return True
                     thresholds = {
@@ -206,9 +202,13 @@ class ClinicInvite(models.Model):
                     if self.start_time >= item['start'] and self.start_time < item['end']:
                         matched = True
                         for field in self.clinic.additional_fields.all():
+                            print(f'cheking additional field {field}')
+                            print(self.additional_items.all())
+                            print(ClinicInviteAdditionalItem.objects.filter(parent = self))
                             invited_option_id_list = [item.chosen_option.id for item in self.additional_items.all() if item.question.id == field.id]
                             user_entry_option_id_list = [item.chosen_option.id for item in user_entry.additional_items.all() if item.question.id == field.id]
                             if not has_common_member(invited_option_id_list, user_entry_option_id_list):
+                                print(f'do not have same meber {invited_option_id_list} {user_entry_option_id_list}')
                                 return False
                         return True
                         #user_entry.additional_items.all()
@@ -216,8 +216,6 @@ class ClinicInvite(models.Model):
                         print('start time not matched' + str(item['start']) + ' ' + str(item['end']), str(self.start_time))
                 else:
                     print('day invalid')
-            else:
-                print('user entry timeframe empy')
         return False
     def notify_start(self):
         context = { 'object': self }
